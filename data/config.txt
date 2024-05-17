@@ -1,0 +1,1 @@
+"{"power":true,"autoMode":true,"upTime":28800,"upTimeHour":8,"upTimeMinute":0,"downTime":61200,"downTimeHour":17,"downTimeMinute":0,"fadeTime":18000,maxBrightness":50,"setBrightness":25,"colorBottomLeft":[255,255,255],"colorBottomRight":[255,255,255],"colorTopLeft":[205,233,254],"colorTopRight":[214,235,255]}"
