@@ -15,7 +15,7 @@
 #include <WiFiUdp.h>
 #include <StreamUtils.h>
 #include <Timezone.h>
-#include <credentials.h>  // remove & change WLAN_ID and WLAN_PASSWORD to your liking. only contains my ssid and password.
+#include <cred.h>  // remove & change WLAN_ID and WLAN_PASSWORD to your liking. only contains my ssid and password.
 
 #define FORMAT_SPIFFS_IF_FAILED true
 // NTP
@@ -540,7 +540,7 @@ void setup() {
   int status = WL_IDLE_STATUS;
   Serial.println("\nConnecting");
   Serial.println(get_wifi_status(status));
-  WiFi.begin(ssid, password);
+  WiFi.begin(WLAN_ID, WLAN_PASSWORD);
   uint16_t i = A_HORIZONTAL+A_VERTICAL+A_HORIZONTAL-2;
   while(status != WL_CONNECTED){
       strip.SetPixelColor(i, blue);
