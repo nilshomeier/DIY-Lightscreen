@@ -24,9 +24,11 @@ WiFiUDP ntpUDP;
 #define NUM_LEDS_BACK 30 //122
 #define A_HORIZONTAL 10
 #define A_VERTICAL 5
-#define NUM_LEDS_SIDE 20
+#define NUM_LEDS_SIDE 32
+#define B_HORIZONTAL 8
+#define B_VERTICAL 8
 #define DATA_PIN_BACK 14
-#define DATA_PIN_SIDE 33
+// #define DATA_PIN_SIDE 33
 
 #define HOUR 3600
 #define MINUTE 60
@@ -54,15 +56,15 @@ int lastSecond = 0;
 int lastMillis;
 
 
-const uint16_t PixelCount = 30; // make sure to set this to the number of pixels in your strip
-const uint8_t PixelPin = 14;  // make sure to set this to the correct pin, ignored for Esp8266
-
 NeoGamma<NeoGammaTableMethod> colorGamma; // for any fade animations, best to correct gamma
-// NeoPixelBus<NeoGrbFeature, NeoWs2812xMethod> strip(PixelCount, PixelPin);
-NeoPixelBus<NeoGrbFeature, NeoEsp32Rmt0800KbpsMethod > strip(PixelCount, PixelPin);
+NeoPixelBus<NeoGrbFeature, NeoWs2812xMethod> strip(NUM_LEDS_BACK+NUM_LEDS_SIDE, DATA_PIN_BACK);
+// NeoPixelBus<NeoGrbFeature, NeoEsp32Rmt1800KbpsMethod > stripBACK(NUM_LEDS_BACK, DATA_PIN_BACK);
+// NeoPixelBus<NeoGrbFeature, NeoEsp32Rmt2800KbpsMethod > stripSIDE(NUM_LEDS_SIDE, DATA_PIN_SIDE);
 // NeoPixel animation time management object
 // NeoPixelAnimator animations(PixelCount, NEO_CENTISECONDS);
-NeoPixelAnimator animations(PixelCount, NEO_DECISECONDS);
+NeoPixelAnimator animations(NUM_LEDS_BACK+NUM_LEDS_SIDE, NEO_DECISECONDS);
+// NeoPixelAnimator animationsBACK(NUM_LEDS_BACK, NEO_DECISECONDS);
+// NeoPixelAnimator animationsSIDE(NUM_LEDS_SIDE, NEO_DECISECONDS);
 // Possible values from 1 to 32768, and there some helpful constants defined as...
 // NEO_MILLISECONDS        1    // ~65 seconds max duration, ms updates
 // NEO_CENTISECONDS       10    // ~10.9 minutes max duration, centisecond updates
@@ -357,25 +359,48 @@ void animFadeToColor(uint16_t time,
         RgbColor currentBottomRightColor = RgbColor::LinearBlend(bottomRightColor, endBottomRightColor.Dim(brightness), fadeAmount);
         RgbColor currentBottomLeftColor = RgbColor::LinearBlend(bottomLeftColor, endBottomLeftColor.Dim(brightness), fadeAmount);
         
-        // Bottom side gradient
-        for (int i = 0; i < A_HORIZONTAL; i++) {
-            strip.SetPixelColor(i, colorGamma.Correct(RgbColor::LinearBlend(currentBottomLeftColor, currentBottomRightColor, float(i) / (A_HORIZONTAL - 1))));
-        }
-        // Right side gradient
-        for (int i = 0; i < A_VERTICAL; i++) {
-            strip.SetPixelColor(A_HORIZONTAL + i, colorGamma.Correct(RgbColor::LinearBlend(currentBottomRightColor, currentTopRightColor, float(i) / (A_VERTICAL - 1))));
-        }
+        // BACK
+          // Bottom side gradient
+          for (int i = 0; i < A_HORIZONTAL; i++) {
+              strip.SetPixelColor(i, colorGamma.Correct(RgbColor::LinearBlend(currentBottomLeftColor, currentBottomRightColor, float(i) / (A_HORIZONTAL - 1))));
+          }
+          // Right side gradient
+          for (int i = 0; i < A_VERTICAL; i++) {
+              strip.SetPixelColor(A_HORIZONTAL + i, colorGamma.Correct(RgbColor::LinearBlend(currentBottomRightColor, currentTopRightColor, float(i) / (A_VERTICAL - 1))));
+          }
+          // Top side gradient
+          for (int i = 0; i < A_HORIZONTAL; i++) {
+              strip.SetPixelColor(A_HORIZONTAL + A_VERTICAL + i, colorGamma.Correct(RgbColor::LinearBlend(currentTopRightColor, currentTopLeftColor, float(i) / (A_HORIZONTAL - 1))));
+          }
+          // Left side gradient
+          for (int i = 0; i < A_VERTICAL; i++) {
+              strip.SetPixelColor(A_HORIZONTAL + A_VERTICAL + A_HORIZONTAL + i, colorGamma.Correct(RgbColor::LinearBlend(currentTopLeftColor, currentBottomLeftColor, float(i) / (A_VERTICAL - 1))));
+          }    
 
-        // Top side gradient
-        for (int i = 0; i < A_HORIZONTAL; i++) {
-            strip.SetPixelColor(A_HORIZONTAL + A_VERTICAL + i, colorGamma.Correct(RgbColor::LinearBlend(currentTopRightColor, currentTopLeftColor, float(i) / (A_HORIZONTAL - 1))));
-        }
-
-        // Left side gradient
-        for (int i = 0; i < A_VERTICAL; i++) {
-            strip.SetPixelColor(A_HORIZONTAL + A_VERTICAL + A_HORIZONTAL + i, colorGamma.Correct(RgbColor::LinearBlend(currentTopLeftColor, currentBottomLeftColor, float(i) / (A_VERTICAL - 1))));
-        }    
+        // THIS IS MIRRORED FROM CONFIG: LEFT = RIGHT & RIGHT = LEFT!
+        // Calculate current colors for each corner based on transition progress
+        currentTopLeftColor = RgbColor::LinearBlend(topRightColor, endTopRightColor.Dim(brightness), fadeAmount);
+        currentTopRightColor = RgbColor::LinearBlend(topLeftColor, endTopLeftColor.Dim(brightness), fadeAmount);
+        currentBottomRightColor = RgbColor::LinearBlend(bottomLeftColor, endBottomLeftColor.Dim(brightness), fadeAmount);
+        currentBottomLeftColor = RgbColor::LinearBlend(bottomRightColor, endBottomRightColor.Dim(brightness), fadeAmount);
         
+        // SIDE
+          // Bottom side gradient
+          for (int i = 0; i < B_HORIZONTAL; i++) {
+              strip.SetPixelColor(NUM_LEDS_BACK + i, colorGamma.Correct(RgbColor::LinearBlend(currentBottomLeftColor, currentBottomRightColor, float(i) / (B_HORIZONTAL - 1))));
+          }
+          // Right side gradient
+          for (int i = 0; i < B_VERTICAL; i++) {
+              strip.SetPixelColor(NUM_LEDS_BACK + B_HORIZONTAL + i, colorGamma.Correct(RgbColor::LinearBlend(currentBottomRightColor, currentTopRightColor, float(i) / (B_VERTICAL - 1))));
+          }
+          // Top side gradient
+          for (int i = 0; i < B_HORIZONTAL; i++) {
+              strip.SetPixelColor(NUM_LEDS_BACK + B_HORIZONTAL + B_VERTICAL + i, colorGamma.Correct(RgbColor::LinearBlend(currentTopRightColor, currentTopLeftColor, float(i) / (B_HORIZONTAL - 1))));
+          }
+          // Left side gradient
+          for (int i = 0; i < B_VERTICAL; i++) {
+              strip.SetPixelColor(NUM_LEDS_BACK + B_HORIZONTAL + B_VERTICAL + B_HORIZONTAL + i, colorGamma.Correct(RgbColor::LinearBlend(currentTopLeftColor, currentBottomLeftColor, float(i) / (B_VERTICAL - 1))));
+          }            
         if (param.state == AnimationState_Completed) {
             state = 2;
             topLeftColor = currentTopLeftColor;
@@ -405,25 +430,49 @@ void animFadeOn(uint16_t time) {
         RgbColor currentBottomRightColor = RgbColor::LinearBlend(black, config.colorBottomRight.Dim(brightness), fadeAmount);
         RgbColor currentBottomLeftColor = RgbColor::LinearBlend(black, config.colorBottomLeft.Dim(brightness), fadeAmount);
         
-        // Bottom side gradient
-        for (int i = 0; i < A_HORIZONTAL; i++) {
-            strip.SetPixelColor(i, colorGamma.Correct(RgbColor::LinearBlend(currentBottomLeftColor, currentBottomRightColor, float(i) / (A_HORIZONTAL - 1))));
-        }
-        // Right side gradient
-        for (int i = 0; i < A_VERTICAL; i++) {
-            strip.SetPixelColor(A_HORIZONTAL + i, colorGamma.Correct(RgbColor::LinearBlend(currentBottomRightColor, currentTopRightColor, float(i) / (A_VERTICAL - 1))));
-        }
+        // BACK
+          // Bottom side gradient
+          for (int i = 0; i < A_HORIZONTAL; i++) {
+              strip.SetPixelColor(i, colorGamma.Correct(RgbColor::LinearBlend(currentBottomLeftColor, currentBottomRightColor, float(i) / (A_HORIZONTAL - 1))));
+          }
+          // Right side gradient
+          for (int i = 0; i < A_VERTICAL; i++) {
+              strip.SetPixelColor(A_HORIZONTAL + i, colorGamma.Correct(RgbColor::LinearBlend(currentBottomRightColor, currentTopRightColor, float(i) / (A_VERTICAL - 1))));
+          }
+          // Top side gradient
+          for (int i = 0; i < A_HORIZONTAL; i++) {
+              strip.SetPixelColor(A_HORIZONTAL + A_VERTICAL + i, colorGamma.Correct(RgbColor::LinearBlend(currentTopRightColor, currentTopLeftColor, float(i) / (A_HORIZONTAL - 1))));
+          }
+          // Left side gradient
+          for (int i = 0; i < A_VERTICAL; i++) {
+              strip.SetPixelColor(A_HORIZONTAL + A_VERTICAL + A_HORIZONTAL + i, colorGamma.Correct(RgbColor::LinearBlend(currentTopLeftColor, currentBottomLeftColor, float(i) / (A_VERTICAL - 1))));
+          }
 
-        // Top side gradient
-        for (int i = 0; i < A_HORIZONTAL; i++) {
-            strip.SetPixelColor(A_HORIZONTAL + A_VERTICAL + i, colorGamma.Correct(RgbColor::LinearBlend(currentTopRightColor, currentTopLeftColor, float(i) / (A_HORIZONTAL - 1))));
-        }
-
-        // Left side gradient
-        for (int i = 0; i < A_VERTICAL; i++) {
-            strip.SetPixelColor(A_HORIZONTAL + A_VERTICAL + A_HORIZONTAL + i, colorGamma.Correct(RgbColor::LinearBlend(currentTopLeftColor, currentBottomLeftColor, float(i) / (A_VERTICAL - 1))));
-        }    
+        // SIDE IS MIRRORED FROM CONFIG: LEFT = RIGHT & RIGHT = LEFT!
+        // Calculate current colors for each corner based on transition progress
+        currentTopLeftColor = RgbColor::LinearBlend(black, config.colorTopRight.Dim(brightness), fadeAmount);
+        currentTopRightColor = RgbColor::LinearBlend(black, config.colorTopLeft.Dim(brightness), fadeAmount);
+        currentBottomRightColor = RgbColor::LinearBlend(black, config.colorBottomLeft.Dim(brightness), fadeAmount);
+        currentBottomLeftColor = RgbColor::LinearBlend(black, config.colorBottomRight.Dim(brightness), fadeAmount);
         
+        // SIDE
+          // Bottom side gradient
+          for (int i = 0; i < B_HORIZONTAL; i++) {
+              strip.SetPixelColor(NUM_LEDS_BACK + i, colorGamma.Correct(RgbColor::LinearBlend(currentBottomLeftColor, currentBottomRightColor, float(i) / (B_HORIZONTAL - 1))));
+          }
+          // Right side gradient
+          for (int i = 0; i < B_VERTICAL; i++) {
+              strip.SetPixelColor(NUM_LEDS_BACK + B_HORIZONTAL + i, colorGamma.Correct(RgbColor::LinearBlend(currentBottomRightColor, currentTopRightColor, float(i) / (B_VERTICAL - 1))));
+          }
+          // Top side gradient
+          for (int i = 0; i < B_HORIZONTAL; i++) {
+              strip.SetPixelColor(NUM_LEDS_BACK + B_HORIZONTAL + B_VERTICAL + i, colorGamma.Correct(RgbColor::LinearBlend(currentTopRightColor, currentTopLeftColor, float(i) / (B_HORIZONTAL - 1))));
+          }
+          // Left side gradient
+          for (int i = 0; i < B_VERTICAL; i++) {
+              strip.SetPixelColor(NUM_LEDS_BACK + B_HORIZONTAL + B_VERTICAL + B_HORIZONTAL + i, colorGamma.Correct(RgbColor::LinearBlend(currentTopLeftColor, currentBottomLeftColor, float(i) / (B_VERTICAL - 1))));
+          }   
+
         if (param.state == AnimationState_Completed) {
             state = 2;
             topLeftColor = config.colorTopLeft;
@@ -442,13 +491,14 @@ void animFadeOff(uint16_t time) {
     state = 1;
     Serial.println("Fade off...");
 
-    for (uint16_t pixel = 0; pixel < NUM_LEDS_BACK; pixel++)
-    {
-        float p = (static_cast<float>(pixel)/static_cast<float>(NUM_LEDS_BACK));
-        RgbColor currentColor = strip.GetPixelColor<RgbColor>(pixel);
+    AnimEaseFunction easing;
+    easing = NeoEase::CubicIn;
 
-        AnimEaseFunction easing;
-        easing = NeoEase::CubicIn;
+    // BACK
+    for (uint16_t pixel = 0; pixel < NUM_LEDS_BACK + NUM_LEDS_SIDE; pixel++)
+    {
+        float p = (static_cast<float>(pixel)/static_cast<float>(NUM_LEDS_BACK+NUM_LEDS_SIDE));
+        RgbColor currentColor = strip.GetPixelColor<RgbColor>(pixel);
 
         AnimUpdateCallback animUpdate = [=](const AnimationParam& param)
         {
@@ -468,6 +518,7 @@ void animFadeOff(uint16_t time) {
 
         animations.StartAnimation(pixel, time, animUpdate);
     }
+
 }
 
 
@@ -647,6 +698,9 @@ void setup() {
     AsyncWebParameter* p11 = request->getParam(10);
     config.maxBrightness = p10->value().toInt();
     config.setBrightness = p11->value().toInt();
+    if (config.maxBrightness > 255) config.maxBrightness = 255;
+    if (config.setBrightness > 255) config.setBrightness = 255;
+    if (config.setBrightness > config.maxBrightness) config.setBrightness = config.maxBrightness;
 
     saveConfiguration(filename, config);
 
@@ -714,6 +768,7 @@ void loop() {
     strip.Show();
 
   }
+
 
   lastSecond = cursecond;
 }

@@ -14,7 +14,7 @@
             color: #333;
             text-align: center;
         }
-        button {
+        #saveButton {
             background-color: #4CAF50;
             border: none;
             color: white;
@@ -23,6 +23,19 @@
             text-decoration: none;
             display: inline-block;
             font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+        #rebootButton {
+            background-color: #ff0000;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            font-weight: bold;
             margin: 4px 2px;
             cursor: pointer;
         }
@@ -245,7 +258,10 @@
                 </td>
             </tr>
             <tr>
-                <td colspan="2"><button onclick="save()">Speichern</button></td>
+                <td colspan="2"><button id="saveButton" onclick="save()">Speichern</button></td>
+            </tr>
+            <tr>
+                <td colspan="2"><button id="rebootButton" onclick="reboot()">Reboot</button></td>
             </tr>
         </table>
 
@@ -454,6 +470,16 @@
 
         };
         
+        xhr.open("GET", url);
+        xhr.setRequestHeader("Accept", "*/*");
+        xhr.send();
+
+    }
+
+    function reboot(){
+        var url = "/reboot"
+        var xhr = new XMLHttpRequest();
+
         xhr.open("GET", url);
         xhr.setRequestHeader("Accept", "*/*");
         xhr.send();
