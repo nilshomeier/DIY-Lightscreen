@@ -138,6 +138,11 @@
                 <input type="checkbox" id="switchAutoMode">
                 <span class="slider round"></span>
             </label>
+            <h2>TV-Mode</h2>
+            <label class="switch">
+                <input type="checkbox" id="switchTVMode">
+                <span class="slider round"></span>
+            </label>
         </div>
 
         <table style="display: inline-block;">
@@ -300,6 +305,8 @@
                 document.getElementById("colorpickerBA").setAttribute("value", rgbToHex(responseJson[0].colorBottomLeft[0], responseJson[0].colorBottomLeft[1], responseJson[0].colorBottomLeft[2]));
                 document.getElementById("colorpickerBB").setAttribute("value", rgbToHex(responseJson[0].colorBottomRight[0], responseJson[0].colorBottomRight[1], responseJson[0].colorBottomRight[2]));
 
+                document.getElementById("switchTVMode").checked = responseJson[0].tvMode;
+
             }
         };
 
@@ -321,36 +328,6 @@
             b: parseInt(result[3], 16)
         } : null;
     }
-
-    // document.getElementById("switchBack").addEventListener("click", function() {
-    //     console.log("back: " + document.getElementById("switchBack").checked);
-    //     var url = "";
-    //     if(document.getElementById("switchBack").checked){
-    //         url = "/on?strip=Back";
-    //     }else{
-    //         url = "/off?strip=Back"
-    //     }
-    //     var xhr = new XMLHttpRequest();
-
-    //     xhr.open("GET", url);
-    //     xhr.setRequestHeader("Accept", "*/*");
-    //     xhr.send();
-    // });
-
-    // document.getElementById("switchSide").addEventListener("click", function() {
-    //     console.log("side: " + document.getElementById("switchSide").checked);
-    //     var url = "";
-    //     if(document.getElementById("switchSide").checked){
-    //         url = "/on?strip=Side";
-    //     }else{
-    //         url = "/off?strip=Side"
-    //     }
-    //     var xhr = new XMLHttpRequest();
-
-    //     xhr.open("GET", url);
-    //     xhr.setRequestHeader("Accept", "*/*");
-    //     xhr.send();
-    // });
 
     document.getElementById("switchPower").addEventListener("change", function() {
         var url = "";
@@ -376,70 +353,20 @@
         xhr.send();
     });
 
-    // function saveBrightness() {
-    //     var brightnessMax = document.getElementById("maxBrightness").value
-    //     var brightnessSet = document.getElementById("setBrightness").value
-    //     var url = "/stripBrightness?mb=" + brightnessMax + "&sb=" + brightnessSet;
-    //     console.log(url);
-    //     var xhr = new XMLHttpRequest();
-
-    //     xhr.onreadystatechange = function(){
-    //         if (this.readyState == 4 && this.status == 200) {
-    //             saveColor();
-    //             saveTime();
-    //         };
-    //     };
+    document.getElementById("switchTVMode").addEventListener("change", function() {
+        var checked = document.getElementById("switchTVMode").getAttribute("checked");
+        if (checked) {
+            var url = "/tvModeOn";
+        } else {
+            var url = "/tvModeOff";
+        }
         
-    //     xhr.open("GET", url);
-    //     xhr.setRequestHeader("Accept", "*/*");
-    //     xhr.send();
-    // }
+        var xhr = new XMLHttpRequest();
 
-    // function saveColor() {
-    //     var colorTA = hexToRgb(document.getElementById("colorpickerTA").value)
-    //     var colorTB = hexToRgb(document.getElementById("colorpickerTB").value)
-    //     var colorBA = hexToRgb(document.getElementById("colorpickerBA").value)
-    //     var colorBB = hexToRgb(document.getElementById("colorpickerBB").value)
-        
-    //     console.log("colorpickerTA: (" + colorTA.r + "," + colorTA.g + "," + colorTA.b + ")");
-    //     console.log("colorpickerTB: (" + colorTB.r + "," + colorTB.g + "," + colorTB.b + ")");
-    //     console.log("colorpickerBA: (" + colorBA.r + "," + colorBA.g + "," + colorBA.b + ")");
-    //     console.log("colorpickerBB: (" + colorBB.r + "," + colorBB.g + "," + colorBB.b + ")");
-
-
-    //     var url = "/setColor?TA=(" + padLeadingZeros(colorTA.r, 3) + "," + padLeadingZeros(colorTA.g, 3) + "," + padLeadingZeros(colorTA.b, 3) + ")" + "&TB=(" + padLeadingZeros(colorTB.r, 3) + "," + padLeadingZeros(colorTB.g, 3) + "," + padLeadingZeros(colorTB.b, 3) + ")" + "&BA=(" + padLeadingZeros(colorBA.r, 3) + "," + padLeadingZeros(colorBA.g, 3) + "," + padLeadingZeros(colorBA.b, 3) + ")" + "&BB=(" + padLeadingZeros(colorBB.r, 3) + "," + padLeadingZeros(colorBB.g, 3) + "," + padLeadingZeros(colorBB.b, 3) + ")";
-    //     var xhr = new XMLHttpRequest();
-    //     console.log(url);
-
-    //     xhr.onreadystatechange = function(){
-    //         console.log(xhr.response);
-    //     };
-        
-    //     response = xhr.open("GET", url);
-    //     xhr.setRequestHeader("Accept", "*/*");
-    //     xhr.send();
-    // }
-
-    // function saveTime(){
-    //     var upTime = document.getElementById("timeUp").value;
-    //     var upTimeSplit = upTime.split(":");
-    //     var upTimeSec = upTimeSplit[0]*3600 + upTimeSplit[1]*60;
-    //     var downTime = document.getElementById("timeDown").value;
-    //     var downTimeSplit = downTime.split(":");
-    //     var downTimeSec = downTimeSplit[0]*3600 + downTimeSplit[1]*60;
-
-    //     var url = "/setFadeTime?upTimeHour=" + upTimeSplit[0] + "&upTimeMin=" + upTimeSplit[1] + "&downTimeHour=" + downTimeSplit[0] + "&downTimeMin=" + downTimeSplit[1];
-    //     var xhr = new XMLHttpRequest();
-
-    //     xhr.onreadystatechange = function(){
-    //         console.log(xhr.response);
-
-    //     };
-        
-    //     xhr.open("GET", url);
-    //     xhr.setRequestHeader("Accept", "*/*");
-    //     xhr.send();
-    // }
+        xhr.open("GET", url);
+        xhr.setRequestHeader("Accept", "*/*");
+        xhr.send();
+    });
 
     function save(){
         var upTime = document.getElementById("timeUp").value;

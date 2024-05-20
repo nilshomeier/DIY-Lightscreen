@@ -21,18 +21,29 @@
 // NTP
 WiFiUDP ntpUDP;
 
-#define NUM_LEDS_BACK 30 //122
-#define A_HORIZONTAL 10
-#define A_VERTICAL 5
-#define NUM_LEDS_SIDE 32
-#define B_HORIZONTAL 8
-#define B_VERTICAL 8
+// DEV
+// #define NUM_LEDS_BACK 30
+// #define A_HORIZONTAL 10
+// #define A_VERTICAL 5
+// #define NUM_LEDS_SIDE 32
+// #define B_HORIZONTAL 8
+// #define B_VERTICAL 8
+
+// LIVE
+#define NUM_LEDS_BACK 176
+#define A_HORIZONTAL 59
+#define A_VERTICAL 29
+#define NUM_LEDS_SIDE 116
+#define B_HORIZONTAL 29
+#define B_VERTICAL 29
+
 #define DATA_PIN_BACK 14
 // #define DATA_PIN_SIDE 33
 
 #define HOUR 3600
 #define MINUTE 60
 #define CONFIGTIME 25
+#define TVTIME 50
 
 const char* WLAN_ID = ssid;           
 const char* WLAN_PASSWORD = password;
@@ -115,6 +126,7 @@ struct Config {
   RgbColor colorTopRight;
   RgbColor colorBottomLeft;
   RgbColor colorBottomRight;
+  bool tvMode;
 };
 
 const char *filename = "/config.txt";  // <- SD library uses 8.3 filenames
@@ -175,6 +187,7 @@ JsonDocument jsonConfig() {
   jColorTopRight.add(config.colorTopRight.R);
   jColorTopRight.add(config.colorTopRight.G);
   jColorTopRight.add(config.colorTopRight.B);
+  doc["tvMode"] = config.tvMode;
   
   return doc;
 }
@@ -219,6 +232,7 @@ void loadConfiguration(const char *filename, Config &config) {
   config.colorBottomRight = tempB;
   config.colorTopLeft = tempC;
   config.colorTopRight = tempD;
+  config.tvMode = doc["tvMode"] | false;
 
   // Close the file (Curiously, File's destructor doesn't close the file)
   file.close();
@@ -254,6 +268,7 @@ void printConfig() {
   Serial.println("CONFIG DUMP:");
   Serial.print("config.power: "); Serial.println(config.power);
   Serial.print("config.autoMode: "); Serial.println(config.autoMode);
+  Serial.print("config.tvMode: "); Serial.println(config.tvMode);
   Serial.print("config.upTime: "); Serial.println(config.upTime);
   Serial.print("config.upTimeHour: "); Serial.println(config.upTimeHour);
   Serial.print("config.upTimeMinute: "); Serial.println(config.upTimeMinute);
@@ -376,6 +391,7 @@ void animFadeToColor(uint16_t time,
           for (int i = 0; i < A_VERTICAL; i++) {
               strip.SetPixelColor(A_HORIZONTAL + A_VERTICAL + A_HORIZONTAL + i, colorGamma.Correct(RgbColor::LinearBlend(currentTopLeftColor, currentBottomLeftColor, float(i) / (A_VERTICAL - 1))));
           }    
+
 
         // THIS IS MIRRORED FROM CONFIG: LEFT = RIGHT & RIGHT = LEFT!
         // Calculate current colors for each corner based on transition progress
@@ -607,6 +623,10 @@ void setup() {
   Serial.println(WiFi.localIP());
   delay(100);
 
+// *************************************************************************************************
+  // API
+  // *************************************************************************************************
+
   Serial.print("Preparing API...");
   server.onNotFound([](AsyncWebServerRequest *request) {
     request->send(404, "text/plain", "Link wurde nicht gefunden!");
@@ -617,12 +637,39 @@ void setup() {
     request->send(200, "text/html", "OK!");
   });
 
+  server.on("/getInformation", [](AsyncWebServerRequest *request) {
+    String json = "\"ledStrips\":[" + exportAsJson() + "]";
+    Serial.println(json);
+    request->send(200, "text/html", json);
+  });
+
+  server.on("/configPage", [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/configPage.html", "text/html");
+  });
+
+  server.on("/tvModeOff", [](AsyncWebServerRequest *request) {
+    // config.power = false;
+    config.tvMode = false;
+    config.autoMode = true;
+    Serial.println("TV Mode off...");
+    // animFadeOff(TVTIME);
+    request->send(200, "text/html", "TV Mode off...");
+  });
+
+  server.on("/tvModeOn", [](AsyncWebServerRequest *request) {
+    // config.power = false;
+    config.tvMode = true;
+    config.autoMode = false;
+    Serial.println("TV Mode on...");
+    animFadeOff(TVTIME);
+    request->send(200, "text/html", "TV Mode on...");
+  });
+
   server.on("/setClock", [](AsyncWebServerRequest *request) {
     RTC_Update();
     RtcDateTime now = Rtc.GetDateTime();
     printDateTime(now);
     request->send(200, "text/html", "String(printDateTime(now))");
-    // configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
   });
 
   server.on("/on", [](AsyncWebServerRequest *request) {
@@ -652,18 +699,6 @@ void setup() {
       Serial.println("AutoMode off");
       request->send(200, "text/html", "AutoMode off");
     }
-  });
-
-  server.on("/getInformation", [](AsyncWebServerRequest *request) {
-    String json = "\"ledStrips\":[" + exportAsJson() + "]";
-
-    Serial.println(json);
-  
-    request->send(200, "text/html", json);
-  });
-
-  server.on("/configPage", [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/configPage.html", "text/html");
   });
 
   server.on("/saveConfig", [](AsyncWebServerRequest *request) {
@@ -709,6 +744,9 @@ void setup() {
     request->send(200, "text/html", "Config wurde gesetzt!");
 
   });
+
+  // *************************************************************************************************
+  // *************************************************************************************************
 
   // Start NTP Time Client
   timeClient.begin();
